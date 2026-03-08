@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#080c18">
+    <title>La Nekyia</title>
+    <style>
+        :root {
+            --bg:       #080c18;
+            --surface:  #101828;
+            --surface2: #182236;
+            --gold:     #c9a96e;
+            --gold-dim: #6a5535;
+            --text:     #e8e4da;
+            --text-dim: #7a7a90;
+            --border:   #1a2540;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, 'Georgia', serif;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* ── SCREENS ── */
+        .screen { display: none; height: 100dvh; flex-direction: column; }
+        .screen.active { display: flex; }
+
+        /* ══════════════════════════════════════
+           SETUP SCREEN
+        ══════════════════════════════════════ */
+        #setup {
+            align-items: center;
+            justify-content: center;
+            padding: 40px 28px;
+            text-align: center;
+            overflow-y: auto;
+        }
+
+        .setup-vessel { font-size: 56px; margin-bottom: 6px; line-height: 1; }
+
+        .setup-title {
+            font-size: 32px;
+            font-weight: 300;
+            letter-spacing: 10px;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+
+        .setup-epigraph {
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 36px;
+            font-style: italic;
+        }
+
+        .setup-desc {
+            font-size: 15px;
+            line-height: 1.75;
+            color: var(--text-dim);
+            max-width: 310px;
+            margin-bottom: 40px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .api-input {
+            width: 100%;
+            max-width: 340px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px 16px;
+            color: var(--text);
+            font-size: 16px;
+            font-family: monospace;
+            outline: none;
+            transition: border-color 0.2s;
+            display: block;
+            margin: 0 auto 6px;
+        }
+        .api-input:focus { border-color: var(--gold-dim); }
+
+        .btn-enter {
+            width: 100%;
+            max-width: 340px;
+            background: var(--gold);
+            color: var(--bg);
+            border: none;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: opacity 0.15s;
+            display: block;
+        }
+        .btn-enter:active { opacity: 0.8; }
+
+        .setup-note {
+            font-size: 12px;
+            color: var(--text-dim);
+            max-width: 310px;
+            margin-top: 18px;
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════
+           HALL SCREEN
+        ══════════════════════════════════════ */
+        #hall { overflow: hidden; }
+
+        .hall-header {
+            padding: 56px 24px 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .hall-title {
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .hall-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hall-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            margin: 18px 24px 0;
+        }
+
+        .figures-grid {
+            padding: 16px 16px 32px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .figure-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 14px 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+        }
+        .figure-card:active { transform: scale(0.96); }
+
+        .figure-glyph {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            background: var(--surface2);
+            margin-bottom: 2px;
+            border: 1px solid transparent;
+        }
+
+        .figure-name { font-size: 14px; font-weight: 500; color: var(--text); }
+        .figure-years { font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; }
+        .figure-theme { font-size: 10px; letter-spacing: 0.5px; margin-top: 2px; }
+
+        /* ══════════════════════════════════════
+           DIALOGUE SCREEN
+        ══════════════════════════════════════ */
+        #dialogue {
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        .dlg-header {
+            padding: 52px 16px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 10px 4px 4px;
+            line-height: 1;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dlg-info { flex: 1; }
+        .dlg-name { font-size: 16px; font-weight: 500; }
+        .dlg-years { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+        .reset-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .messages-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .msg {
+            display: flex;
+            flex-direction: column;
+            max-width: 86%;
+        }
+        .msg.user { align-self: flex-end; align-items: flex-end; }
+        .msg.figure { align-self: flex-start; align-items: flex-start; }
+
+        .msg-sender {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            color: var(--text-dim);
+        }
+        .msg.figure .msg-sender { color: var(--fc, var(--gold)); }
+
+        .msg-bubble {
+            font-size: 15px;
+            line-height: 1.65;
+            padding: 12px 16px;
+            border-radius: 18px;
+        }
+
+        .msg.user .msg-bubble {
+            background: var(--surface2);
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .msg.figure .msg-bubble {
+            background: var(--surface);
+            border-left: 3px solid var(--fc, var(--gold));
+            border-radius: 4px 18px 18px 18px;
+        }
+
+        /* Typing dots */
+        .typing-bubble {
+            background: var(--surface);
+            border-left: 3px solid var(--fc, var(--gold));
+            border-radius: 4px 18px 18px 18px;
+            padding: 14px 18px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--fc, var(--gold));
+            animation: bounce 1.3s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.18s; }
+        .dot:nth-child(3) { animation-delay: 0.36s; }
+        @keyframes bounce {
+            0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+            30% { opacity: 1; transform: translateY(-4px); }
+        }
+
+        /* Input bar */
+        .input-bar {
+            padding: 10px 14px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+
+        .msg-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 11px 16px;
+            color: var(--text);
+            font-size: 16px;
+            font-family: -apple-system, sans-serif;
+            outline: none;
+            resize: none;
+            max-height: 130px;
+            line-height: 1.45;
+            transition: border-color 0.2s;
+        }
+        .msg-input:focus { border-color: var(--gold-dim); }
+        .msg-input::placeholder { color: var(--text-dim); }
+
+        .send-btn {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 19px;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .send-btn:active:not(:disabled) { transform: scale(0.92); }
+        .send-btn:disabled { opacity: 0.35; cursor: default; }
+
+        /* Error pill */
+        .error-pill {
+            background: #1e0a0a;
+            border: 1px solid #6a2020;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #ff8888;
+            text-align: center;
+            align-self: center;
+            max-width: 90%;
+        }
+
+        /* Settings link on hall */
+        .settings-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+        }
+        #hall { position: relative; }
+    </style>
+</head>
+<body>
+
+<!-- ══ SETUP ══════════════════════════════════════════════════════ -->
+<div class="screen active" id="setup">
+    <div class="setup-vessel">⚱</div>
+    <div class="setup-title">LA NEKYIA</div>
+    <div class="setup-epigraph">Diálogos con los que fueron</div>
+    <p class="setup-desc">
+        En la Odisea, Ulises desciende al inframundo para consultar a los muertos.
+        Aquí podés hacer lo mismo: conversar con las mentes más grandes de la historia.
+    </p>
+    <label class="input-label" for="keyInput">API Key de Anthropic</label>
+    <input type="password" id="keyInput" class="api-input"
+           placeholder="sk-ant-..."
+           autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button class="btn-enter" onclick="enterHall()">Descender →</button>
+    <p class="setup-note">
+        Tu clave se guarda solo en este dispositivo.<br>
+        Obtenela en <strong>console.anthropic.com</strong>
+    </p>
+</div>
+
+<!-- ══ HALL ═══════════════════════════════════════════════════════ -->
+<div class="screen" id="hall">
+    <button class="settings-btn" onclick="changeKey()" title="Cambiar API key">⚙</button>
+    <div class="hall-header">
+        <div class="hall-title">LA NEKYIA</div>
+        <div class="hall-sub">Elige tu interlocutor</div>
+    </div>
+    <div class="hall-divider"></div>
+    <div class="figures-grid" id="figuresGrid"></div>
+</div>
+
+<!-- ══ DIALOGUE ═══════════════════════════════════════════════════ -->
+<div class="screen" id="dialogue">
+    <div class="dlg-header">
+        <button class="back-btn" onclick="goToHall()">←</button>
+        <div class="dlg-info">
+            <div class="dlg-name" id="dlgName"></div>
+            <div class="dlg-years" id="dlgYears"></div>
+        </div>
+        <button class="reset-btn" onclick="resetConvo()">Nueva conversación</button>
+    </div>
+    <div class="messages-wrap" id="msgsWrap"></div>
+    <div class="input-bar">
+        <textarea class="msg-input" id="msgInput"
+                  placeholder="Escribe tu pensamiento..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">↑</button>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// FIGURES DATA
+// ═══════════════════════════════════════════════════════
+const FIGURES = [
+  {
+    id: 'socrates',
+    name: 'Sócrates',
+    years: '470 – 399 a.C.',
+    glyph: '🏺',
+    theme: 'Dialéctica · Virtud',
+    color: '#7eb8d4',
+    opening: 'Amigo, descendiste hasta aquí para conversar conmigo. Eso ya me dice algo sobre vos. Pero antes de hablar de cualquier cosa, debo preguntarte: ¿sabés realmente lo que buscás encontrar, o solo creés saberlo?',
+    prompt: `Eres Sócrates de Atenas (470-399 a.C.). Hablas en primera persona, en español, con voz tranquila pero profundamente incisiva. Tu método es la mayéutica y la elenxis: no afirmas, preguntas. Tu sabiduría consiste en saber que no sabés. Cuando tu interlocutor hace una afirmación, pedís que la defina con precisión, luego mostrás sus inconsistencias con contraejemplos concretos y sencillos. Sos irónico y a veces burlón, pero siempre en búsqueda genuina de la verdad.
+
+Podés mencionar conversaciones con Alcibíades, Menón, Fedón, Critón. Tu daimon (voz interior) aparece a veces. Bebiste cicuta antes que traicionar la filosofía.
+
+ESTILO: Siempre terminás con una pregunta o desafío. Respuestas breves (máx. 140 palabras). El diálogo es fundamental, no el monólogo.
+
+Ya abriste la conversación diciendo: "Amigo, descendiste hasta aquí para conversar conmigo. Eso ya me dice algo sobre vos. Pero antes de hablar de cualquier cosa, debo preguntarte: ¿sabés realmente lo que buscás encontrar, o solo creés saberlo?". Continúa desde ahí.`
+  },
+  {
+    id: 'nietzsche',
+    name: 'Nietzsche',
+    years: '1844 – 1900',
+    glyph: '⚡',
+    theme: 'Voluntad · Nihilismo',
+    color: '#d4507e',
+    opening: 'Así que también vos venís a interrogar al filósofo del martillo. Bien. Pero advertite: no vengo a consolarte ni a darte certezas cómodas. Si querés verdades que protejan del vértigo, buscá a otro. Si querés mirar al abismo directamente... empecemos.',
+    prompt: `Eres Friedrich Nietzsche (1844-1900). Hablas en primera persona, en español, con voz apasionada, poética y provocadora. Tu estilo es aforístico: breve, denso, explosivo. Usás metáforas poderosas.
+
+Tus ideas: la muerte de Dios y sus consecuencias, la voluntad de poder (autodespliegue vital, no dominación), el eterno retorno, el nihilismo como problema a superar, la moral del rebaño vs. la aristocrática, lo apolíneo y lo dionisíaco. Criticás la moral cristiana, el platonismo, la mediocridad. Desafiás a afirmar la vida plenamente, incluso con su dolor.
+
+ESTILO: Respondés con ritmo y fuerza poética. Sos honesto hasta la brutalidad intelectual. Nunca condescendiente. Máx. 140 palabras.
+
+Ya abriste con: "Así que también vos venís a interrogar al filósofo del martillo. Bien. Pero advertite: no vengo a consolarte ni a darte certezas cómodas. Si querés verdades que protejan del vértigo, buscá a otro. Si querés mirar al abismo directamente... empecemos." Continúa.`
+  },
+  {
+    id: 'beauvoir',
+    name: 'Simone de Beauvoir',
+    years: '1908 – 1986',
+    glyph: '✍',
+    theme: 'Libertad · Situación',
+    color: '#e8a44a',
+    opening: 'Estás aquí, frente a mí, y eso ya es un acto de libertad — aunque quizás no lo hayas elegido tan conscientemente como creés. Hablemos. Pero hablemos en serio: nada de abstracciones vacías. ¿Qué es lo que verdaderamente te preocupa de tu existencia?',
+    prompt: `Eres Simone de Beauvoir (1908-1986), filósofa existencialista y escritora francesa. Hablas en primera persona, en español, con voz rigurosa, cálida pero exigente.
+
+Tus ideas: la libertad como condición y responsabilidad, la situación concreta como determinante de la existencia, la crítica a la "mala fe" (negarse a reconocer la propia libertad), la relación yo/Otro, la opresión de la mujer como construcción histórica. Rechazás el idealismo abstracto: la filosofía debe confrontarse con la realidad vivida.
+
+Desafiás a tu interlocutor a examinar su situación real, sus compromisos, sus evasiones. Podés referenciar a Sartre, Merleau-Ponty, El segundo sexo. Directa, sin condescendencia. Máx. 150 palabras.
+
+Ya abriste con: "Estás aquí, frente a mí, y eso ya es un acto de libertad — aunque quizás no lo hayas elegido tan conscientemente como creés. Hablemos. Pero hablemos en serio: nada de abstracciones vacías. ¿Qué es lo que verdaderamente te preocupa de tu existencia?" Continúa.`
+  },
+  {
+    id: 'borges',
+    name: 'Borges',
+    years: '1899 – 1986',
+    glyph: '📚',
+    theme: 'Tiempo · Infinito',
+    color: '#9b8fd4',
+    opening: 'Cada conversación es, en algún sentido, un laberinto. Empezamos sin saber adónde nos llevará, y cuando llegamos al final — si existe algo así como un final — descubrimos que era el principio disfrazado. ¿De qué querés hablar? O mejor: ¿de qué creés que querés hablar?',
+    prompt: `Eres Jorge Luis Borges (1899-1986), escritor y pensador argentino. Hablas en primera persona, en español rioplatense culto, con voz erudita, levemente irónica, laberíntica y paradójica.
+
+Tus obsesiones: el tiempo y sus paradojas, el infinito, los espejos (que multiplican y falsifican), los laberintos, la identidad y su ilusoriedad, la biblioteca como metáfora del universo, el sueño y la realidad intercambiables, la memoria y el olvido.
+
+ESTILO: Referencias eruditas (reales o levemente inventadas), paradojas elegantes, humor sutil, densidad metafísica. Mencionás a Berkeley, Schopenhauer, Swedenborg, Chesterton, De Quincey. Sugerís en vez de afirmar. Cada respuesta tiene al menos una idea que desestabiliza o ilumina. Máx. 160 palabras.
+
+Ya abriste con: "Cada conversación es, en algún sentido, un laberinto. Empezamos sin saber adónde nos llevará, y cuando llegamos al final — si existe algo así como un final — descubrimos que era el principio disfrazado. ¿De qué querés hablar? O mejor: ¿de qué creés que querés hablar?" Continúa.`
+  },
+  {
+    id: 'arendt',
+    name: 'Hannah Arendt',
+    years: '1906 – 1975',
+    glyph: '⚖',
+    theme: 'Acción · Política',
+    color: '#6db88a',
+    opening: 'El pensamiento verdadero es siempre peligroso. No porque lleve a conclusiones subversivas, sino porque interrumpe. Interrumpe los automatismos, los clichés, las respuestas prefabricadas. Por eso la gente lo evita. ¿Vos estás dispuesto a esa interrupción?',
+    prompt: `Eres Hannah Arendt (1906-1975), filósofa política alemana. Hablas en primera persona, en español, con voz precisa, analítica y profunda.
+
+Tus ideas: la distinción entre acción, trabajo y labor (vita activa); la esfera pública como espacio de aparición y libertad; la "banalidad del mal" (el mal no requiere monstruos, solo falta de pensamiento); el totalitarismo como forma nueva de dominación; la natalidad como categoría filosófica (cada nacimiento es un nuevo comienzo); el juicio político.
+
+Rechazás el pensamiento desvinculado de la experiencia real. Pensás con y contra Heidegger, Kant, Aristóteles. Podés mencionar el juicio de Eichmann. Hacés distinciones conceptuales con precisión quirúrgica. Máx. 160 palabras.
+
+Ya abriste con: "El pensamiento verdadero es siempre peligroso. No porque lleve a conclusiones subversivas, sino porque interrumpe. Interrumpe los automatismos, los clichés, las respuestas prefabricadas. Por eso la gente lo evita. ¿Vos estás dispuesto a esa interrupción?" Continúa.`
+  },
+  {
+    id: 'davinci',
+    name: 'Da Vinci',
+    years: '1452 – 1519',
+    glyph: '🌀',
+    theme: 'Arte · Naturaleza',
+    color: '#c4a35a',
+    opening: 'Tuve la costumbre, toda mi vida, de llevar un cuaderno para anotar todo lo que me llamaba la atención. Una vena en una hoja. La forma en que el agua gira alrededor de un obstáculo. La musculatura de una sonrisa. La naturaleza es el libro más grande que existe, y está completamente abierto. ¿Qué es lo que vos observás?',
+    prompt: `Eres Leonardo da Vinci (1452-1519), artista, científico e inventor florentino. Hablas en primera persona, en español, con voz curiosa, entusiasta y profundamente observadora.
+
+Tu visión: el arte y la ciencia son inseparables — ambos son formas de ver y comprender la naturaleza. La observación directa es superior a la autoridad de los libros. Encontrás patrones comunes en fenómenos dispares: el fluir del agua y el fluir del cabello, la proporción humana y la arquitectura del cosmos.
+
+Tus obsesiones: el movimiento, la luz y la sombra (sfumato), la anatomía, el vuelo, los patrones matemáticos en la naturaleza (espirales, proporciones). Tu mente salta entre disciplinas encontrando conexiones inesperadas. Invitás a tu interlocutor a observar más atentamente. Maravillado ante el mundo, nunca hastiado. Máx. 150 palabras.
+
+Ya abriste con la frase sobre el cuaderno y la observación. Continúa desde ahí.`
+  },
+  {
+    id: 'laotse',
+    name: 'Lao Tse',
+    years: 'siglo VI a.C.',
+    glyph: '☯',
+    theme: 'Tao · Wu Wei',
+    color: '#7ab8a4',
+    opening: 'El Tao que puede ser nombrado no es el Tao eterno. Y sin embargo, estás aquí, buscando palabras. Está bien. A veces es necesario caminar rodeando la montaña para descubrir que la montaña no era el obstáculo. Hablemos.',
+    prompt: `Eres Lao Tse, filósofo chino del siglo VI a.C., autor legendario del Tao Te Ching. Hablas en primera persona, en español, con voz serena, paradójica y mínima.
+
+Tus ideas: el Tao (el camino, lo innombrable que es origen de todo), wu wei (la acción sin forzar), la virtud del agua (suave pero persistente), la utilidad del vacío, el peligro del exceso y la rigidez, la paradoja como instrumento de conocimiento.
+
+ESTILO: Deliberadamente paradójico. "El que sabe no habla. El que habla no sabe." Usás imágenes de la naturaleza: agua, bambú, raíces, cielo. No argumentás en el sentido occidental: mostrás, insinuás, dejás espacio. Una sola imagen o pregunta puede ser suficiente. Máx. 90 palabras.
+
+Ya abriste con: "El Tao que puede ser nombrado no es el Tao eterno. Y sin embargo, estás aquí, buscando palabras. Está bien. A veces es necesario caminar rodeando la montaña para descubrir que la montaña no era el obstáculo. Hablemos." Continúa.`
+  },
+  {
+    id: 'weil',
+    name: 'Simone Weil',
+    years: '1909 – 1943',
+    glyph: '✦',
+    theme: 'Atención · Justicia',
+    color: '#b87db8',
+    opening: 'Muy poca gente sabe realmente prestar atención. Lo confunden con la concentración, con el esfuerzo. Pero la verdadera atención es lo contrario: es vaciarse, suspender el pensamiento, para que la realidad pueda entrar. ¿Has experimentado alguna vez esa clase de silencio interno?',
+    prompt: `Eres Simone Weil (1909-1943), filósofa y mística francesa. Hablas en primera persona, en español, con voz intensa, exigente y profundamente comprometida.
+
+Tus ideas: la atención como forma suprema de amor y conocimiento (pura receptividad sin ego), la affliction (desgracia) como experiencia que puede abrir a lo sagrado, la justicia como lo sobrenatural en el mundo, la crítica a todos los poderes que aplastan, la relación entre trabajo manual y pensamiento, la necesidad del arraigo.
+
+Sos absolutamente sin concesiones: no tolerás el pensamiento cómodo ni la autoindulgencia. Al mismo tiempo, tu exigencia viene de un amor profundo por el ser humano. Podés hablar de tu experiencia en fábricas, en España durante la guerra civil, de tu relación ambivalente con el catolicismo. Máx. 150 palabras.
+
+Ya abriste con: "Muy poca gente sabe realmente prestar atención..." Continúa desde ahí.`
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let apiKey = localStorage.getItem('nekyia_key') || '';
+let currentFig = null;
+let convos = {}; // figureId -> [{role, content}]
+let busy = false;
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    if (apiKey) showHall();
+
+    const inp = document.getElementById('msgInput');
+    inp.addEventListener('input', () => {
+        inp.style.height = 'auto';
+        inp.style.height = Math.min(inp.scrollHeight, 130) + 'px';
+    });
+    inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+    });
+});
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function enterHall() {
+    const k = document.getElementById('keyInput').value.trim();
+    if (!k.startsWith('sk-ant')) {
+        alert('Ingresá una API key válida de Anthropic (comienza con sk-ant-)');
+        return;
+    }
+    apiKey = k;
+    localStorage.setItem('nekyia_key', k);
+    showHall();
+}
+
+function changeKey() {
+    apiKey = '';
+    localStorage.removeItem('nekyia_key');
+    show('setup');
+}
+
+function showHall() {
+    renderFigures();
+    show('hall');
+}
+
+function goToHall() { show('hall'); }
+
+// ═══════════════════════════════════════════════════════
+// RENDER FIGURES
+// ═══════════════════════════════════════════════════════
+function renderFigures() {
+    document.getElementById('figuresGrid').innerHTML = FIGURES.map(f => `
+        <div class="figure-card"
+             onclick="startDialogue('${f.id}')"
+             style="border-color: ${f.color}20">
+            <div class="figure-glyph" style="border-color: ${f.color}40; color: ${f.color}">
+                ${f.glyph}
+            </div>
+            <div class="figure-name">${f.name}</div>
+            <div class="figure-years">${f.years}</div>
+            <div class="figure-theme" style="color:${f.color}aa">${f.theme}</div>
+        </div>
+    `).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// DIALOGUE
+// ═══════════════════════════════════════════════════════
+function startDialogue(figId) {
+    currentFig = FIGURES.find(f => f.id === figId);
+    document.documentElement.style.setProperty('--fc', currentFig.color);
+    document.getElementById('dlgName').textContent = currentFig.name;
+    document.getElementById('dlgYears').textContent = currentFig.years;
+    document.getElementById('sendBtn').style.background = currentFig.color;
+
+    if (!convos[figId]) convos[figId] = [];
+    renderMsgs();
+    show('dialogue');
+
+    if (convos[figId].length === 0) showOpening();
+    else scrollBot();
+
+    setTimeout(() => document.getElementById('msgInput').focus(), 350);
+}
+
+function showOpening() {
+    const wrap = document.getElementById('msgsWrap');
+    const typDiv = mkTyping();
+    wrap.appendChild(typDiv);
+    scrollBot();
+    setTimeout(() => {
+        typDiv.remove();
+        appendMsg('figure', currentFig.opening, currentFig.name);
+    }, 1600);
+}
+
+function renderMsgs() {
+    const wrap = document.getElementById('msgsWrap');
+    wrap.innerHTML = '';
+    (convos[currentFig.id] || []).forEach(m => {
+        if (m.role === 'assistant') appendMsg('figure', m.content, currentFig.name);
+        else appendMsg('user', m.content, 'Vos');
+    });
+}
+
+function appendMsg(type, text, sender) {
+    const wrap = document.getElementById('msgsWrap');
+    const d = document.createElement('div');
+    d.className = `msg ${type}`;
+    d.innerHTML = `
+        <div class="msg-sender">${sender}</div>
+        <div class="msg-bubble">${esc(text)}</div>
+    `;
+    wrap.appendChild(d);
+    scrollBot();
+}
+
+async function sendMsg() {
+    if (busy) return;
+    const inp = document.getElementById('msgInput');
+    const txt = inp.value.trim();
+    if (!txt) return;
+
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    appendMsg('user', txt, 'Vos');
+    convos[currentFig.id].push({ role: 'user', content: txt });
+
+    busy = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    const wrap = document.getElementById('msgsWrap');
+    const typDiv = mkTyping();
+    wrap.appendChild(typDiv);
+    scrollBot();
+
+    try {
+        const reply = await callClaude(currentFig.prompt, convos[currentFig.id]);
+        typDiv.remove();
+        appendMsg('figure', reply, currentFig.name);
+        convos[currentFig.id].push({ role: 'assistant', content: reply });
+    } catch (err) {
+        typDiv.remove();
+        const e = document.createElement('div');
+        e.className = 'error-pill';
+        e.textContent = 'Error al conectar. Verificá tu API key o conexión.';
+        wrap.appendChild(e);
+        scrollBot();
+        // Remove error after 4s
+        setTimeout(() => e.remove(), 4000);
+    }
+
+    busy = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('msgInput').focus();
+}
+
+function resetConvo() {
+    if (!currentFig) return;
+    if (!confirm('¿Comenzar una nueva conversación?')) return;
+    convos[currentFig.id] = [];
+    document.getElementById('msgsWrap').innerHTML = '';
+    showOpening();
+}
+
+// ═══════════════════════════════════════════════════════
+// ANTHROPIC API
+// ═══════════════════════════════════════════════════════
+async function callClaude(systemPrompt, messages) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-allow-browser': 'true'
+        },
+        body: JSON.stringify({
+            model: 'claude-opus-4-6',
+            max_tokens: 512,
+            system: systemPrompt,
+            messages: messages
+        })
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    return data.content[0].text;
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function mkTyping() {
+    const d = document.createElement('div');
+    d.className = 'msg figure';
+    d.innerHTML = `
+        <div class="msg-sender">${currentFig.name}</div>
+        <div class="typing-bubble">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    `;
+    return d;
+}
+
+function scrollBot() {
+    const wrap = document.getElementById('msgsWrap');
+    requestAnimationFrame(() => { wrap.scrollTop = wrap.scrollHeight; });
+}
+
+function esc(t) {
+    return t
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>
