@@ -452,16 +452,23 @@ function resetConvo(){
 // API
 // ═══════════════════════════════════════
 async function callClaude(systemPrompt,messages){
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json',
-            'x-api-key': apiKey.trim(),
-            'anthropic-version':'2023-06-01',
-            'anthropic-dangerous-allow-browser':'true'
-        },
-        body:JSON.stringify({model:'claude-opus-4-6',max_tokens:512,system:systemPrompt,messages})
-    });
+    let res;
+    try {
+        res=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            mode:'cors',
+            credentials:'omit',
+            headers:{
+                'Content-Type':'application/json',
+                'x-api-key': apiKey.trim(),
+                'anthropic-version':'2023-06-01',
+                'anthropic-dangerous-allow-browser':'true'
+            },
+            body:JSON.stringify({model:'claude-opus-4-6',max_tokens:512,system:systemPrompt,messages})
+        });
+    } catch(networkErr) {
+        throw new Error('Error de red. Verificá tu conexión a internet e intentá de nuevo.');
+    }
     if(!res.ok){
         let msg = `Error ${res.status}`;
         try { const d=await res.json(); msg += ': ' + (d.error?.message || d.error?.type || ''); } catch(e){}
